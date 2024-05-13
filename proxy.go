@@ -57,7 +57,7 @@ type Options func(wp *WebsocketProxy)
 
 // You must carry a port number，ws://ip:80/ssss, wss://ip:443/aaaa
 // ex: ws://ip:port/ajaxchattest
-func NewProxy(addr string, beforeCallback func(r *http.Request) error, options ...Options) (*WebsocketProxy, error) {
+func NewProxy(addr string) (*WebsocketProxy, error) {
 	u, err := url.Parse(addr)
 	if err != nil {
 		return nil, ErrFormatAddr
@@ -70,23 +70,15 @@ func NewProxy(addr string, beforeCallback func(r *http.Request) error, options .
 		return nil, ErrFormatAddr
 	}
 	wp := &WebsocketProxy{
-		scheme:          u.Scheme,
-		remoteAddr:      fmt.Sprintf("%s:%s", host, port),
-		defaultPath:     u.Path,
-		beforeHandshake: beforeCallback,
-		logger:          log.New(os.Stderr, "", log.LstdFlags),
+		scheme:      u.Scheme,
+		remoteAddr:  fmt.Sprintf("%s:%s", host, port),
+		defaultPath: u.Path,
+		logger:      log.New(os.Stderr, "", log.LstdFlags),
 	}
 	if u.Scheme == WssScheme {
 		wp.tlsc = &tls.Config{InsecureSkipVerify: true}
 	}
-	for op := range options {
-		options[op](wp)
-	}
 	return wp, nil
-}
-
-func (wp *WebsocketProxy) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	wp.Proxy(writer, request)
 }
 
 func (wp *WebsocketProxy) Proxy(writer http.ResponseWriter, request *http.Request) {
@@ -152,13 +144,5 @@ func (wp *WebsocketProxy) Proxy(writer http.ResponseWriter, request *http.Reques
 func SetTLSConfig(tlsc *tls.Config) Options {
 	return func(wp *WebsocketProxy) {
 		wp.tlsc = tlsc
-	}
-}
-
-func SetLogger(l *log.Logger) Options {
-	return func(wp *WebsocketProxy) {
-		if l != nil {
-			wp.logger = l
-		}
 	}
 }
