@@ -18,8 +18,8 @@ const (
 )
 
 func isWebSocketReq(request *http.Request) bool {
-	return strings.ToLower(request.Header.Get("Connection")) != "upgrade" ||
-		strings.ToLower(request.Header.Get("Upgrade")) != "websocket"
+	return strings.ToLower(request.Header.Get("Connection")) == "upgrade" &&
+		strings.ToLower(request.Header.Get("Upgrade")) == "websocket"
 }
 
 func isWebSocketConn(url url.URL) bool {
